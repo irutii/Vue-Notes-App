@@ -1,6 +1,6 @@
 <template>
 
-  <div v-title data-title="View Note" >
+  <div >
     <transition name="fade" >
       <div class='view_note modal'>
         <div class="v_n_header modal_header">
@@ -62,10 +62,12 @@
       </div>
     </transition>
 
+    <Overlay v-if="deleting" :visible="true" />
+
     <Prompt
       v-if="deleting"
       title="Delete note"
-      content="This post will be deleted. There's no undo so you won't be able to find it."
+      content="This note will be deleted. There's no undo so you won't be able to find it."
       actionText="Delete"
       @back="_toggle('deleting')"
       @action="deleteNote"
@@ -76,9 +78,10 @@
 </template>
 
 <script>
-import Prompt from '../others/prompt.vue'
 import $ from 'jquery'
 import Notify from 'handy-notification'
+import Prompt from '../others/prompt.vue'
+import Overlay from '../others/overlay.vue'
 
 export default {
   data(){
@@ -104,9 +107,9 @@ export default {
       }
     },
     deleteNote(){
-      let { $http, $route: { params } } = this
+      let { $http, $route: { params }, $store: { dispatch } } = this
       $http.post('/api/delete-note', { id: params.id }).then(s => {
-        this.$store.dispatch('DELETE_NOTE', params.id)
+        dispatch('DELETE_NOTE', params.id)
         this.Back()
         Notify({ value: s.body.mssg })
       })
@@ -127,12 +130,16 @@ export default {
     }
   },
   created(){
-    let { $http, $route: { params } } = this
-    $http.post('/api/note-details', { id: params.id })
-      .then(s => this.note = s.body )
+    let { $http, $route: { params: { id } }, $router } = this
+    $http.post('/api/note-details', { id }).then(s => this.note = s.body )
+    $http.post('/api/valid-note', { id }).then(s => !s.body ? $router.push('/notes') : null )
+  },
+  mounted(){
+    $('.v_n_cancel').focus()
   },
   components: {
-    'Prompt': Prompt
+    'Prompt': Prompt,
+    'Overlay': Overlay
   }
 }
 </script>

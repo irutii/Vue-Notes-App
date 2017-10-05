@@ -34,7 +34,7 @@ app.post('/note-details', (req, res) => {
 app.post('/delete-note', (req, res) => {
   let { id } = req.body
   db.query('DELETE FROM notes WHERE id=?', [ id ])
-    .then(s => res.json({ mssg: 'Note deleted!!' }) )
+    .then(() => res.json({ mssg: 'Note deleted!!' }) )
     .catch(e => console.log(e) )
 })
 
@@ -44,6 +44,13 @@ app.post('/edit-note', (req, res) => {
   db.query('UPDATE notes SET title=?, content=? WHERE id=?', [ title, content, id ])
     .then(s => res.json(s) )
     .catch(e => console.log(e) )
+})
+
+// INVALID NOTE CHECKING
+app.post('/valid-note', (req, res) => {
+  db.query('SELECT COUNT(id) AS count FROM notes WHERE id=? LIMIT 1', [ req.body.id ])
+    .then(is => res.json(is[0].count == 1 ? true : false) )
+    .catch(err => console.log(err) )
 })
 
 module.exports = app
